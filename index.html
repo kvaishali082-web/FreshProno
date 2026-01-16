@@ -2,82 +2,98 @@
 <html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FreshProno Official</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FreshProno Pro Vault</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+    <div id="splashScreen">
+        <div class="splash-logo">FreshProno</div>
+        <div class="loading-container"><div id="loadingLine" class="loading-line"></div></div>
+    </div>
+
     <div class="freshprono-app">
         <header id="mainHeader">
             <div class="logo">FreshProno</div>
-            <div class="search-icon"><i class="fas fa-search"></i></div>
+            <i class="fas fa-search" style="font-size: 20px;"></i>
         </header>
 
-        <div class="storage-info" id="storageBox">
-            <div class="storage-text">
-                <span>Vault Storage</span>
-                <span id="storageDetail">Calculating...</span>
-            </div>
-            <div class="storage-bar-bg">
-                <div id="storageFill" class="storage-bar-fill" style="width: 0%"></div>
-            </div>
-        </div>
-
         <main id="homePage" class="page">
+            <div class="storage-section">
+                <div class="storage-text"><span>Vault Storage</span><span id="storageDetail">0.0MB Used</span></div>
+                <div class="storage-bar-bg"><div id="storageFill" class="storage-bar-fill"></div></div>
+            </div>
             <div id="videoGrid" class="video-grid"></div>
         </main>
 
         <div id="playerPage" class="page hidden">
-            <div class="video-container">
-                <video id="vPlayer" controls></video>
-                <div class="tap-area left" onclick="seek(-10)"></div>
-                <div class="tap-area right" onclick="seek(10)"></div>
+            <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
+            <h2 id="pTitle" style="padding: 10px 15px; font-size: 18px; margin: 0;"></h2>
+            <div class="action-bar">
+                <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
+                <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
+                <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
             </div>
-            <div class="player-details">
-                <h2 id="pTitle">Video Title</h2>
-                <div class="action-bar">
-                    <button class="action-btn delete" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
-                    <button class="action-btn" onclick="toggleFullScreen()"><i class="fas fa-expand"></i> Full Screen</button>
-                    <button class="action-btn" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Back</button>
-                </div>
-            </div>
-            <div class="up-next-section">
-                <p class="section-title">Up Next</p>
-                <div id="nextList"></div>
-            </div>
+            <div id="suggestionGrid"></div>
         </div>
 
         <div id="uploadPage" class="page hidden">
-            <div class="up-header">
-                <i class="fas fa-arrow-left" onclick="showPage('homePage')"></i>
-                <span>Add Details</span>
+            <div id="uploadStatusOverlay" class="hidden">
+                <div class="splash-logo">Uploading...</div>
+                <div class="loading-container"><div id="uploadLine" class="loading-line"></div></div>
             </div>
-            <div class="thumb-box" onclick="document.getElementById('inImg').click()">
-                <img id="preImg" class="hidden">
-                <div id="prePlace"><i class="fas fa-image fa-2x"></i><p>Select Thumbnail</p></div>
-                <div class="edit-icon"><i class="fas fa-pencil-alt"></i></div>
+            <div class="header-back"><i class="fas fa-arrow-left" onclick="showPage('homePage')"></i> <span>Add New Video</span></div>
+            <div class="thumb-box" onclick="document.getElementById('inVid').click()">
+                <video id="vidPreview"></video>
+                <div id="thumbOverlay" class="hidden"><span>COVER READY</span></div>
+                <div id="prePlace"><i class="fas fa-cloud-upload-alt fa-2x"></i><p>Tap to Select Video</p></div>
+            </div>
+            <div style="padding: 10px 15px;">
+                <button class="select-file-btn" onclick="document.getElementById('inVid').click()">Select Video File</button>
+            </div>
+            <div class="frame-selector">
+                <input type="range" id="frameRange" min="0" value="0" step="0.1" style="width:90%">
             </div>
             <div class="form-area">
-                <input type="text" id="vTitle" placeholder="Create a title...">
-                <div class="file-box" onclick="document.getElementById('inVid').click()">
-                    <i class="fas fa-video"></i> <span id="vidName">Select Video File</span>
-                </div>
-                <p id="upStatus" class="status-msg" style="display:none; color:gold; font-weight:bold; margin-top:10px;"></p>
+                <button id="setThumbBtn" class="action-btn thumb-btn" onclick="captureThumb()">Set Current Frame</button>
+                <input type="text" id="vTitle" placeholder="Video Title...">
             </div>
-            <button class="upload-btn" onclick="saveData()">Upload Video</button>
+            <button class="upload-btn" onclick="saveData()">Save to Vault</button>
         </div>
 
         <nav class="bottom-nav">
             <i class="fas fa-home" onclick="showPage('homePage')"></i>
             <div class="plus-circle" onclick="showPage('uploadPage')"><i class="fas fa-plus"></i></div>
-            <i class="fas fa-download"></i>
+            <i class="fas fa-folder"></i>
         </nav>
-
-        <input type="file" id="inImg" accept="image/*" hidden>
         <input type="file" id="inVid" accept="video/*" hidden>
+        <canvas id="thumbCanvas" class="hidden"></canvas>
     </div>
-    <script src="./script.js"></script>
 </body>
 </html>
+<div id="playerPage" class="page hidden">
+    <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
+    <div style="padding: 10px 15px;">
+        <h2 id="pTitle" style="font-size: 18px; margin: 0 0 10px 0; color: #fff;"></h2>
+        <div class="action-bar">
+            <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
+            <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
+            <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
+        </div>
+    </div>
+    <div id="suggestionGrid" class="suggestions-section"></div>
+</div>
+<div id="playerPage" class="page hidden">
+    <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
+    <div style="padding: 10px 15px;">
+        <h2 id="pTitle" style="font-size: 20px; margin: 10px 0; color: #fff; font-weight: bold;"></h2>
+        <div class="action-bar">
+            <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
+            <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
+            <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
+        </div>
+    </div>
+    <div class="suggestions-header">Up Next</div>
+    <div id="suggestionGrid"></div>
+</div>
