@@ -2,22 +2,42 @@ const db = new Dexie("FreshPronoDB");
 db.version(2).stores({ videos: "++id, title, thumb, vidFile, duration" });
 let selVid = null, selImg = null, activeId = null, currentDuration = "0:00";
 
-window.onload = () => { 
-    renderFeed(); 
+window.onload = () => {
+    renderFeed();
     updateStorageInfo();
     setTimeout(() => { document.getElementById('loadingLine').style.width = '100%'; }, 100);
-    setTimeout(() => { document.getElementById('splashScreen').style.display='none'; }, 1500);
+    setTimeout(() => { document.getElementById('splashScreen').style.display = 'none'; }, 2000);
 };
 
 async function updateStorageInfo() {
-    const est = await navigator.storage.estimate();
-    const used = (est.usage / (1024 * 1024)).toFixed(1);
-    document.getElementById('storageDetail').innerText = `${used}MB Used`;
-    document.getElementById('storageFill').style.width = `${((est.usage/est.quota)*100).toFixed(1)}%`;
+    if (navigator.storage && navigator.storage.estimate) {
+        const est = await navigator.storage.estimate();
+        const used = (est.usage / (1024 * 1024)).toFixed(1);
+        document.getElementById('storageDetail').innerText = `${used}MB Used`;
+        document.getElementById('storageFill').style.width = `${((est.usage / est.quota) * 100).toFixed(1)}%`;
+    }
+}
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+}
+
+function resetUploadForm() {
+    selVid = null; selImg = null;
+    document.getElementById('vTitle').value = "";
+    document.getElementById('inVid').value = "";
+    document.getElementById('vidPreview').src = "";
+    document.getElementById('prePlace').classList.remove('hidden');
+    document.getElementById('thumbOverlay').classList.add('hidden');
+    document.getElementById('frameRange').value = 0;
+    document.getElementById('setThumbBtn').innerText = "Set Current Frame";
+    document.getElementById('setThumbBtn').style.background = "#FFD700";
 }
 
 document.getElementById('inVid').onchange = (e) => {
     selVid = e.target.files[0];
+    if(!selVid) return;
     const vPrev = document.getElementById('vidPreview');
     vPrev.src = URL.createObjectURL(selVid);
     vPrev.onloadedmetadata = () => {
@@ -26,7 +46,11 @@ document.getElementById('inVid').onchange = (e) => {
         const secs = Math.floor(vPrev.duration % 60);
         currentDuration = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
-    document.getElementById('prePlace').style.display = 'none';
+    document.getElementById('prePlace').classList.add('hidden');
+};
+
+document.getElementById('frameRange').oninput = (e) => {
+    document.getElementById('vidPreview').currentTime = e.target.value;
 };
 
 function captureThumb() {
@@ -34,14 +58,27 @@ function captureThumb() {
     const canvas = document.getElementById('thumbCanvas');
     canvas.width = vPrev.videoWidth; canvas.height = vPrev.videoHeight;
     canvas.getContext('2d').drawImage(vPrev, 0, 0);
-    canvas.toBlob((blob) => { selImg = blob; alert("Cover Set!"); }, 'image/jpeg');
+    canvas.toBlob((blob) => {
+        selImg = blob;
+        document.getElementById('thumbOverlay').classList.remove('hidden');
+        document.getElementById('setThumbBtn').innerText = "Cover Set! ✅";
+        document.getElementById('setThumbBtn').style.background = "#4CAF50";
+    }, 'image/jpeg');
 }
 
 async function saveData() {
     const title = document.getElementById('vTitle').value;
-    if(!selVid || !title || !selImg) return alert("Fill all details!");
+    if(!selVid || !title || !selImg) return alert("Pahile Video ani Cover nivada!");
+    document.getElementById('uploadStatusOverlay').classList.remove('hidden');
+    document.getElementById('uploadLine').style.width = "100%";
     await db.videos.add({ title, thumb: selImg, vidFile: selVid, duration: currentDuration });
-    location.reload();
+    setTimeout(() => {
+        document.getElementById('uploadStatusOverlay').classList.add('hidden');
+        resetUploadForm();
+        showPage('homePage');
+        renderFeed();
+        updateStorageInfo();
+    }, 1500);
 }
 
 async function renderFeed() {
@@ -50,9 +87,9 @@ async function renderFeed() {
     const all = await db.videos.toArray();
     all.reverse().forEach(v => {
         const card = document.createElement('div');
-        card.className = "s-card";
+        card.style.marginBottom = "15px";
         card.onclick = () => openPlayer(v);
-        card.innerHTML = `<div class="s-thumb-box"><img src="${URL.createObjectURL(v.thumb)}" class="s-thumb-img"><span class="s-duration">${v.duration}</span></div><div class="s-details"><h4>${v.title}</h4></div>`;
+        card.innerHTML = `<div style="position:relative"><img src="${URL.createObjectURL(v.thumb)}" style="width:100%; aspect-ratio:16/9; object-fit:cover"><span style="position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.8);padding:2px 5px;font-size:12px;border-radius:4px">${v.duration}</span></div><h3 style="padding:10px; margin:0; font-size:15px;">${v.title}</h3>`;
         grid.appendChild(card);
     });
 }
@@ -67,23 +104,44 @@ function openPlayer(v) {
     renderSuggestions(v.id);
 }
 
+window.closePlayer = () => { document.getElementById('vPlayer').pause(); showPage('homePage'); };
+window.delVideo = async () => { if(confirm("Delete this video?")) { await db.videos.delete(activeId); showPage('homePage'); renderFeed(); updateStorageInfo(); } };
+window.saveToGallery = async () => {
+    const v = await db.videos.get(activeId);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(v.vidFile);
+    a.download = v.title + ".mp4"; a.click();
+};
+
 async function renderSuggestions(currentId) {
     const sGrid = document.getElementById('suggestionGrid');
-    sGrid.innerHTML = '';
+    sGrid.innerHTML = ''; 
     const all = await db.videos.toArray();
-    all.filter(vid => vid.id !== currentId).reverse().forEach(v => {
+    const suggestions = all.filter(vid => vid.id !== currentId).reverse();
+
+    if (suggestions.length === 0) {
+        sGrid.innerHTML = '<p style="padding:20px; color:#aaa; text-align:center;">No suggestions available.</p>';
+        return;
+    }
+
+    suggestions.forEach(v => {
         const sCard = document.createElement('div');
         sCard.className = "s-card";
-        sCard.onclick = () => { openPlayer(v); window.scrollTo(0,0); };
-        sCard.innerHTML = `<div class="s-thumb-box"><img src="${URL.createObjectURL(v.thumb)}" class="s-thumb-img"><span class="s-duration">${v.duration}</span></div><div class="s-details"><h4>${v.title}</h4></div>`;
+        sCard.onclick = () => { 
+            document.getElementById('vPlayer').pause(); 
+            openPlayer(v);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        sCard.innerHTML = `
+            <div class="s-thumb-box">
+                <img src="${URL.createObjectURL(v.thumb)}" class="s-thumb-img">
+                <span class="s-duration">${v.duration}</span>
+            </div>
+            <div class="s-details">
+                <h4 class="s-v-title">${v.title}</h4>
+                <p class="s-v-meta">FreshProno Vault • ${v.duration} • Now Playing</p>
+            </div>
+        `;
         sGrid.appendChild(sCard);
     });
 }
-
-function showPage(id) {
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.getElementById(id).classList.remove('hidden');
-}
-
-function closePlayer() { document.getElementById('vPlayer').pause(); showPage('homePage'); }
-async function delVideo() { if(confirm("Delete?")) { await db.videos.delete(activeId); location.reload(); } }
