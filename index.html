@@ -17,6 +17,7 @@
     <div class="freshprono-app">
         <header id="mainHeader">
             <div class="logo">FreshProno</div>
+            <i class="fas fa-search" style="font-size: 20px;"></i>
         </header>
 
         <main id="homePage" class="page">
@@ -29,11 +30,12 @@
 
         <div id="playerPage" class="page hidden">
             <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
-            <div style="padding: 15px;">
-                <h2 id="pTitle" style="font-size: 20px; color: #fff; margin-bottom: 15px;"></h2>
-                <div class="action-bar" style="display:flex; gap:10px;">
-                    <button class="action-btn" onclick="delVideo()" style="background:#ff4444; border:none; color:#fff; padding:10px; border-radius:5px; flex:1;">Delete</button>
-                    <button class="action-btn back" onclick="closePlayer()" style="background:#FFD700; border:none; color:#000; padding:10px; border-radius:5px; flex:1;">Home</button>
+            <div style="padding: 10px 15px;">
+                <h2 id="pTitle" style="font-size: 20px; margin: 10px 0; color: #fff; font-weight: bold;"></h2>
+                <div class="action-bar">
+                    <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
+                    <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
                 </div>
             </div>
             <div class="suggestions-header">Up Next</div>
@@ -45,17 +47,23 @@
                 <div class="splash-logo">Uploading...</div>
                 <div class="loading-container"><div id="uploadLine" class="loading-line"></div></div>
             </div>
-            <div class="header-back" style="padding:15px;" onclick="showPage('homePage')"><i class="fas fa-arrow-left"></i> Back</div>
-            <div class="thumb-box" onclick="document.getElementById('inVid').click()" style="width:100%; background:#111; height:200px; display:flex; align-items:center; justify-content:center; position:relative;">
-                <video id="vidPreview" style="max-width:100%; max-height:100%;"></video>
-                <div id="prePlace" style="text-align:center;"><i class="fas fa-cloud-upload-alt fa-2x"></i><p>Select Video</p></div>
+            <div class="header-back"><i class="fas fa-arrow-left" onclick="showPage('homePage')"></i> <span>Add New Video</span></div>
+            <div class="thumb-box" onclick="document.getElementById('inVid').click()">
+                <video id="vidPreview"></video>
+                <div id="thumbOverlay" class="hidden"><span>COVER READY</span></div>
+                <div id="prePlace"><i class="fas fa-cloud-upload-alt fa-2x"></i><p>Tap to Select Video</p></div>
             </div>
-            <div style="padding:20px;">
-                <input type="range" id="frameRange" min="0" value="0" step="0.1" style="width:100%; margin-bottom:15px;">
-                <button id="setThumbBtn" onclick="captureThumb()" style="width:100%; padding:12px; background:#FFD700; border:none; border-radius:5px; font-weight:bold; margin-bottom:15px;">Set Cover Frame</button>
-                <input type="text" id="vTitle" placeholder="Video Title..." style="width:100%; padding:12px; background:#111; color:#fff; border:1px solid #333; border-radius:5px; box-sizing:border-box;">
-                <button class="upload-btn" onclick="saveData()" style="width:100%; padding:15px; background:#FFD700; border:none; border-radius:30px; font-weight:bold; margin-top:20px;">Save to Vault</button>
+            <div style="padding: 10px 15px;">
+                <button class="select-file-btn" onclick="document.getElementById('inVid').click()">Select Video File</button>
             </div>
+            <div class="frame-selector">
+                <input type="range" id="frameRange" min="0" value="0" step="0.1" style="width:90%">
+            </div>
+            <div class="form-area">
+                <button id="setThumbBtn" class="action-btn thumb-btn" onclick="captureThumb()">Set Current Frame</button>
+                <input type="text" id="vTitle" placeholder="Video Title...">
+            </div>
+            <button class="upload-btn" onclick="saveData()">Save to Vault</button>
         </div>
 
         <nav class="bottom-nav">
