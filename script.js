@@ -1,11 +1,48 @@
 const db = new Dexie("FreshPronoDB");
 db.version(2).stores({ videos: "++id, title, thumb, vidFile, duration" });
+let selVid = null, selImg = null, activeId = null, currentDuration = "0:00";
 
 window.onload = () => { 
     renderFeed(); 
     updateStorageInfo();
-    setTimeout(() => { document.getElementById('splashScreen').style.display = 'none'; }, 1500);
+    setTimeout(() => { document.getElementById('loadingLine').style.width = '100%'; }, 100);
+    setTimeout(() => { document.getElementById('splashScreen').style.display='none'; }, 1500);
 };
+
+async function updateStorageInfo() {
+    const est = await navigator.storage.estimate();
+    const used = (est.usage / (1024 * 1024)).toFixed(1);
+    document.getElementById('storageDetail').innerText = `${used}MB Used`;
+    document.getElementById('storageFill').style.width = `${((est.usage/est.quota)*100).toFixed(1)}%`;
+}
+
+document.getElementById('inVid').onchange = (e) => {
+    selVid = e.target.files[0];
+    const vPrev = document.getElementById('vidPreview');
+    vPrev.src = URL.createObjectURL(selVid);
+    vPrev.onloadedmetadata = () => {
+        document.getElementById('frameRange').max = vPrev.duration;
+        const mins = Math.floor(vPrev.duration / 60);
+        const secs = Math.floor(vPrev.duration % 60);
+        currentDuration = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+    document.getElementById('prePlace').style.display = 'none';
+};
+
+function captureThumb() {
+    const vPrev = document.getElementById('vidPreview');
+    const canvas = document.getElementById('thumbCanvas');
+    canvas.width = vPrev.videoWidth; canvas.height = vPrev.videoHeight;
+    canvas.getContext('2d').drawImage(vPrev, 0, 0);
+    canvas.toBlob((blob) => { selImg = blob; alert("Cover Set!"); }, 'image/jpeg');
+}
+
+async function saveData() {
+    const title = document.getElementById('vTitle').value;
+    if(!selVid || !title || !selImg) return alert("Fill all details!");
+    await db.videos.add({ title, thumb: selImg, vidFile: selVid, duration: currentDuration });
+    location.reload();
+}
 
 async function renderFeed() {
     const grid = document.getElementById('videoGrid');
@@ -13,40 +50,34 @@ async function renderFeed() {
     const all = await db.videos.toArray();
     all.reverse().forEach(v => {
         const card = document.createElement('div');
-        card.className = "v-card";
+        card.className = "s-card";
         card.onclick = () => openPlayer(v);
-        card.innerHTML = `<img src="${URL.createObjectURL(v.thumb)}" class="v-thumb"><div style="padding:10px;"><h3 style="margin:0; font-size:16px;">${v.title}</h3></div>`;
+        card.innerHTML = `<div class="s-thumb-box"><img src="${URL.createObjectURL(v.thumb)}" class="s-thumb-img"><span class="s-duration">${v.duration}</span></div><div class="s-details"><h4>${v.title}</h4></div>`;
         grid.appendChild(card);
     });
 }
 
 function openPlayer(v) {
-    document.getElementById('homePage').classList.add('hidden');
-    document.getElementById('playerPage').classList.remove('hidden');
+    activeId = v.id;
+    showPage('playerPage');
     const p = document.getElementById('vPlayer');
     p.src = URL.createObjectURL(v.vidFile);
     document.getElementById('pTitle').innerText = v.title;
-    renderSuggestions(v.id);
     p.play();
+    renderSuggestions(v.id);
 }
 
 async function renderSuggestions(currentId) {
     const sGrid = document.getElementById('suggestionGrid');
     sGrid.innerHTML = '';
     const all = await db.videos.toArray();
-    const suggestions = all.filter(vid => vid.id !== currentId).reverse();
-    suggestions.forEach(v => {
+    all.filter(vid => vid.id !== currentId).reverse().forEach(v => {
         const sCard = document.createElement('div');
         sCard.className = "s-card";
         sCard.onclick = () => { openPlayer(v); window.scrollTo(0,0); };
-        sCard.innerHTML = `<div class="s-thumb-box"><img src="${URL.createObjectURL(v.thumb)}" class="s-thumb-img"><span class="s-duration">${v.duration}</span></div><div class="s-details"><h4 class="s-v-title">${v.title}</h4></div>`;
+        sCard.innerHTML = `<div class="s-thumb-box"><img src="${URL.createObjectURL(v.thumb)}" class="s-thumb-img"><span class="s-duration">${v.duration}</span></div><div class="s-details"><h4>${v.title}</h4></div>`;
         sGrid.appendChild(sCard);
     });
-}
-
-function closePlayer() {
-    document.getElementById('vPlayer').pause();
-    showPage('homePage');
 }
 
 function showPage(id) {
@@ -54,11 +85,5 @@ function showPage(id) {
     document.getElementById(id).classList.remove('hidden');
 }
 
-async function updateStorageInfo() {
-    if (navigator.storage && navigator.storage.estimate) {
-        const est = await navigator.storage.estimate();
-        const used = (est.usage / (1024 * 1024)).toFixed(1);
-        document.getElementById('storageDetail').innerText = `${used}MB Used`;
-        document.getElementById('storageFill').style.width = `${((est.usage / est.quota) * 100).toFixed(1)}%`;
-    }
-}
+function closePlayer() { document.getElementById('vPlayer').pause(); showPage('homePage'); }
+async function delVideo() { if(confirm("Delete?")) { await db.videos.delete(activeId); location.reload(); } }
