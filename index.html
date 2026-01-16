@@ -6,6 +6,7 @@
     <title>FreshProno Pro Vault</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="splashScreen">
@@ -16,7 +17,6 @@
     <div class="freshprono-app">
         <header id="mainHeader">
             <div class="logo">FreshProno</div>
-            <i class="fas fa-search" style="font-size: 20px;"></i>
         </header>
 
         <main id="homePage" class="page">
@@ -29,71 +29,40 @@
 
         <div id="playerPage" class="page hidden">
             <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
-            <h2 id="pTitle" style="padding: 10px 15px; font-size: 18px; margin: 0;"></h2>
-            <div class="action-bar">
-                <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
-                <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
-                <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
+            <div style="padding: 10px 15px;">
+                <h2 id="pTitle" style="font-size: 18px; color: #fff; margin-bottom:10px;"></h2>
+                <div class="action-bar" style="display:flex; gap:10px;">
+                    <button class="action-btn" onclick="saveToGallery()" style="flex:1; padding:10px; background:#222; color:#fff; border:1px solid #333;">Save</button>
+                    <button class="action-btn" onclick="delVideo()" style="flex:1; padding:10px; background:#222; color:#fff; border:1px solid #333;">Delete</button>
+                    <button class="action-btn back" onclick="closePlayer()" style="flex:1; padding:10px; background:#FFD700; color:#000; border:none;">Home</button>
+                </div>
             </div>
+            <div class="suggestions-header" style="padding:15px; border-top:1px solid #222; color:#FFD700; font-weight:bold;">Up Next</div>
             <div id="suggestionGrid"></div>
         </div>
 
         <div id="uploadPage" class="page hidden">
-            <div id="uploadStatusOverlay" class="hidden">
-                <div class="splash-logo">Uploading...</div>
-                <div class="loading-container"><div id="uploadLine" class="loading-line"></div></div>
+            <div class="header-back" style="padding:15px;"><i class="fas fa-arrow-left" onclick="showPage('homePage')"></i> <span>Add Video</span></div>
+            <div class="thumb-box" onclick="document.getElementById('inVid').click()" style="width:100%; height:200px; background:#111; display:flex; align-items:center; justify-content:center;">
+                <video id="vidPreview" style="max-height:100%; max-width:100%;"></video>
+                <div id="prePlace"><i class="fas fa-cloud-upload-alt fa-2x"></i><p>Tap to Select</p></div>
             </div>
-            <div class="header-back"><i class="fas fa-arrow-left" onclick="showPage('homePage')"></i> <span>Add New Video</span></div>
-            <div class="thumb-box" onclick="document.getElementById('inVid').click()">
-                <video id="vidPreview"></video>
-                <div id="thumbOverlay" class="hidden"><span>COVER READY</span></div>
-                <div id="prePlace"><i class="fas fa-cloud-upload-alt fa-2x"></i><p>Tap to Select Video</p></div>
+            <div style="padding:20px;">
+                <input type="range" id="frameRange" min="0" value="0" step="0.1" style="width:100%; margin-bottom:15px;">
+                <button id="setThumbBtn" onclick="captureThumb()" style="width:100%; padding:10px; background:#FFD700; border:none; border-radius:5px; font-weight:bold; margin-bottom:15px;">Set Cover Frame</button>
+                <input type="text" id="vTitle" placeholder="Enter Title..." style="width:100%; padding:12px; background:#111; border:1px solid #333; color:#fff; border-radius:5px; box-sizing:border-box;">
             </div>
-            <div style="padding: 10px 15px;">
-                <button class="select-file-btn" onclick="document.getElementById('inVid').click()">Select Video File</button>
-            </div>
-            <div class="frame-selector">
-                <input type="range" id="frameRange" min="0" value="0" step="0.1" style="width:90%">
-            </div>
-            <div class="form-area">
-                <button id="setThumbBtn" class="action-btn thumb-btn" onclick="captureThumb()">Set Current Frame</button>
-                <input type="text" id="vTitle" placeholder="Video Title...">
-            </div>
-            <button class="upload-btn" onclick="saveData()">Save to Vault</button>
+            <button class="upload-btn" onclick="saveData()" style="width:90%; margin:0 5%; padding:15px; background:#FFD700; border:none; border-radius:30px; font-weight:bold;">Save to Vault</button>
         </div>
 
-        <nav class="bottom-nav">
+        <nav class="bottom-nav" style="position:fixed; bottom:0; width:100%; height:60px; background:#000; display:flex; justify-content:space-around; align-items:center; border-top:1px solid #222;">
             <i class="fas fa-home" onclick="showPage('homePage')"></i>
-            <div class="plus-circle" onclick="showPage('uploadPage')"><i class="fas fa-plus"></i></div>
+            <div class="plus-circle" onclick="showPage('uploadPage')" style="width:45px; height:45px; background:#fff; color:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:-25px; border:4px solid #000;"><i class="fas fa-plus"></i></div>
             <i class="fas fa-folder"></i>
         </nav>
         <input type="file" id="inVid" accept="video/*" hidden>
-        <canvas id="thumbCanvas" class="hidden"></canvas>
+        <canvas id="thumbCanvas" style="display:none;"></canvas>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>
-<div id="playerPage" class="page hidden">
-    <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
-    <div style="padding: 10px 15px;">
-        <h2 id="pTitle" style="font-size: 18px; margin: 0 0 10px 0; color: #fff;"></h2>
-        <div class="action-bar">
-            <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
-            <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
-            <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
-        </div>
-    </div>
-    <div id="suggestionGrid" class="suggestions-section"></div>
-</div>
-<div id="playerPage" class="page hidden">
-    <div class="video-container"><video id="vPlayer" controls playsinline></video></div>
-    <div style="padding: 10px 15px;">
-        <h2 id="pTitle" style="font-size: 20px; margin: 10px 0; color: #fff; font-weight: bold;"></h2>
-        <div class="action-bar">
-            <button class="action-btn" onclick="saveToGallery()"><i class="fas fa-download"></i> Save</button>
-            <button class="action-btn" onclick="delVideo()"><i class="fas fa-trash"></i> Delete</button>
-            <button class="action-btn back" onclick="closePlayer()"><i class="fas fa-arrow-left"></i> Home</button>
-        </div>
-    </div>
-    <div class="suggestions-header">Up Next</div>
-    <div id="suggestionGrid"></div>
-</div>
