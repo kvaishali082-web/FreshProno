@@ -44,3 +44,13 @@ header { display: flex; justify-content: space-between; padding: 15px; align-ite
 .s-details { padding: 12px 15px; }
 .s-v-title { font-size: 16px; font-weight: bold; color: #fff; margin: 0; line-height: 1.4; }
 .s-v-meta { font-size: 13px; color: #aaa; margin-top: 4px; }
+.bottom-nav i.fa-globe {
+    font-size: 22px;
+    color: #888; /* Grey color jyamule te shaant disel */
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.bottom-nav i.fa-globe:active {
+    color: #FFD700; /* Click kelyavar pivala hoil */
+}
