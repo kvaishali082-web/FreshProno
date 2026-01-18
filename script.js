@@ -149,3 +149,39 @@ function openSecretWebsite() {
     // Hi line website la navin window madhe ughdel
     window.open("https://freshporno.net", "_blank");
 }
+function toggleSearch() {
+    const sSec = document.getElementById('searchSection');
+    sSec.classList.toggle('hidden');
+}
+
+async function downloadFromUrl() {
+    const url = document.getElementById('videoUrlInput').value;
+    if(!url) return alert("Pahile URL taka!");
+
+    try {
+        document.getElementById('uploadStatusOverlay').classList.remove('hidden');
+        document.getElementById('uploadLine').style.width = "50%";
+
+        const response = await fetch(url);
+        const blob = await response.blob();
+        
+        // Video file tayar zali
+        const file = new File([blob], "DownloadedVideo.mp4", { type: "video/mp4" });
+        
+        // Atat ha video vault madhe save karnyasaathi automatic upload page var pathva
+        selVid = file;
+        const vPrev = document.getElementById('vidPreview');
+        vPrev.src = URL.createObjectURL(selVid);
+        
+        document.getElementById('uploadLine').style.width = "100%";
+        setTimeout(() => {
+            document.getElementById('uploadStatusOverlay').classList.add('hidden');
+            showPage('uploadPage'); // Atat tithe jaun title ani cover set kara
+            alert("Video Fetch zala! Atat Cover set karun Save kara.");
+        }, 1000);
+
+    } catch (error) {
+        alert("Error: Website ne permission nakarli aahe. Manually download karun upload kara.");
+        document.getElementById('uploadStatusOverlay').classList.add('hidden');
+    }
+}
