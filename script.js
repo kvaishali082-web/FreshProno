@@ -145,3 +145,7 @@ async function renderSuggestions(currentId) {
         sGrid.appendChild(sCard);
     });
 }
+function openSecretWebsite() {
+    // Hi line website la navin window madhe ughdel
+    window.open("https://freshporno.net", "_blank");
+}
