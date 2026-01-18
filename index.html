@@ -82,3 +82,14 @@
     <div class="plus-circle" onclick="showPage('uploadPage')"><i class="fas fa-plus"></i></div>
     <i class="fas fa-globe" onclick="openSecretWebsite()"></i>
 </nav>
+<header id="mainHeader">
+    <div class="logo">FreshProno</div>
+    <i class="fas fa-search" style="font-size: 20px;" onclick="toggleSearch()"></i>
+</header>
+
+<div id="searchSection" class="hidden" style="padding: 10px 15px; background: #111;">
+    <div style="display: flex; gap: 10px;">
+        <input type="text" id="videoUrlInput" placeholder="Paste video URL here..." style="flex-grow: 1; padding: 10px; background: #222; border: 1px solid #FFD700; color: #fff; border-radius: 5px;">
+        <button onclick="downloadFromUrl()" style="padding: 10px; background: #FFD700; border: none; border-radius: 5px; font-weight: bold;">Get</button>
+    </div>
+</div>
