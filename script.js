@@ -185,3 +185,57 @@ async function downloadFromUrl() {
         document.getElementById('uploadStatusOverlay').classList.add('hidden');
     }
 }
+let tempEditThumb = null;
+
+async function openEditModal() {
+    const v = await db.videos.get(activeId);
+    document.getElementById('editTitle').value = v.title;
+    
+    const editPrev = document.getElementById('editPreview');
+    editPrev.src = URL.createObjectURL(v.vidFile);
+    
+    editPrev.onloadedmetadata = () => {
+        document.getElementById('editFrameRange').max = editPrev.duration;
+    };
+    
+    document.getElementById('editFrameRange').oninput = (e) => {
+        editPrev.currentTime = e.target.value;
+    };
+    
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+    tempEditThumb = null;
+}
+
+function captureNewThumb() {
+    const vPrev = document.getElementById('editPreview');
+    const canvas = document.getElementById('thumbCanvas');
+    canvas.width = vPrev.videoWidth; 
+    canvas.height = vPrev.videoHeight;
+    canvas.getContext('2d').drawImage(vPrev, 0, 0);
+    canvas.toBlob((blob) => {
+        tempEditThumb = blob;
+        alert("New Cover Selected! ✅");
+    }, 'image/jpeg');
+}
+
+async function saveEdit() {
+    const newTitle = document.getElementById('editTitle').value;
+    const updateData = { title: newTitle };
+    
+    if (tempEditThumb) {
+        updateData.thumb = tempEditThumb;
+    }
+    
+    await db.videos.update(activeId, updateData);
+    alert("Video Updated!");
+    closeEditModal();
+    
+    // UI Refresh
+    renderFeed();
+    const v = await db.videos.get(activeId);
+    document.getElementById('pTitle').innerText = v.title;
+}
